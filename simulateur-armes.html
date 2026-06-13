@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulateur de commande — Armes FiveM</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; }
+body { background: #0f0f14; color: #e8e6e0; padding: 20px; min-height: 100vh; }
+h1 { font-size: 22px; font-weight: 600; text-align: center; margin-bottom: 4px; color: #fff; }
+.subtitle { font-size: 12px; color: #666; text-align: center; margin-bottom: 24px; }
+.section-title { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; color: #666; margin-bottom: 8px; margin-top: 20px; padding: 0 2px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
+@media(max-width:700px){ .grid-4 { grid-template-columns: repeat(2,1fr); } }
+
+.card { background: #1a1a24; border: 1px solid #2a2a38; border-radius: 12px; padding: 14px; transition: border-color 0.2s; }
+.card:hover { border-color: #3a3a52; }
+.card.active { border-color: #4CAF88; }
+.card-name { font-size: 13px; font-weight: 500; color: #e8e6e0; margin-bottom: 2px; }
+.card-prix { font-size: 11px; color: #666; margin-bottom: 10px; }
+.card-prix span { color: #4CAF88; font-weight: 600; }
+.card-total { font-size: 12px; color: #4CAF88; font-weight: 600; margin-top: 8px; min-height: 16px; }
+
+.qty-ctrl { display: flex; align-items: center; gap: 6px; }
+.qty-btn { width: 28px; height: 28px; background: #2a2a38; border: 1px solid #3a3a52; border-radius: 6px; color: #e8e6e0; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.15s; user-select: none; }
+.qty-btn:hover { background: #3a3a52; }
+.qty-input { width: 50px; text-align: center; background: #0f0f14; border: 1px solid #2a2a38; border-radius: 6px; color: #fff; font-size: 14px; font-weight: 600; padding: 4px 0; }
+.qty-input:focus { outline: none; border-color: #4CAF88; }
+
+.row-item { background: #1a1a24; border: 1px solid #2a2a38; border-radius: 10px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; transition: border-color 0.2s; }
+.row-item:hover { border-color: #3a3a52; }
+.row-item.active { border-color: #4CAF88; }
+.row-left { flex: 1; }
+.row-name { font-size: 12px; font-weight: 500; color: #e8e6e0; }
+.row-sub { font-size: 10px; color: #555; margin-top: 2px; }
+.row-right { display: flex; align-items: center; gap: 10px; }
+.row-prix { font-size: 13px; font-weight: 600; color: #4CAF88; min-width: 110px; text-align: right; }
+
+.badge { display: inline-block; font-size: 9px; font-weight: 600; padding: 2px 6px; border-radius: 20px; margin-left: 5px; vertical-align: middle; }
+.bg-green  { background: #1a3d2e; color: #4CAF88; }
+.bg-blue   { background: #1a2a3d; color: #5B9FDD; }
+.bg-amber  { background: #3d2e1a; color: #DD9F5B; }
+.bg-gray   { background: #2a2a38; color: #aaa; }
+.bg-red    { background: #3d1a1a; color: #DD5B5B; }
+.bg-purple { background: #2a1a3d; color: #AA88EE; }
+
+.recap { background: #1a1a24; border: 1px solid #2a2a38; border-radius: 14px; padding: 18px; margin-top: 20px; }
+.recap-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #222230; font-size: 12px; }
+.recap-row:last-child { border-bottom: none; }
+.recap-label { color: #888; }
+.recap-val { font-weight: 600; color: #e8e6e0; }
+.recap-total { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; padding-top: 14px; border-top: 1px solid #3a3a52; }
+.recap-total-label { font-size: 14px; font-weight: 600; color: #fff; }
+.recap-total-val { font-size: 24px; font-weight: 700; color: #4CAF88; }
+.btn-reset { width: 100%; margin-top: 12px; background: #2a2a38; border: 1px solid #3a3a52; border-radius: 8px; color: #888; font-size: 12px; padding: 10px; cursor: pointer; transition: background 0.15s; }
+.btn-reset:hover { background: #3a3a52; color: #e8e6e0; }
+.empty { text-align: center; color: #444; font-size: 12px; padding: 16px 0; }
+input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+.footer { text-align: center; font-size: 10px; color: #333; margin-top: 24px; }
+</style>
+</head>
+<body>
+
+<h1>⚙️ Simulateur de commande</h1>
+<p class="subtitle">Calcul automatique du total — tous les prix en euros · Serveur FiveM RP</p>
+
+<div class="section-title">ARMES</div>
+<div class="grid-4" id="armes-grid"></div>
+
+<div class="section-title">PIÈCES FINIES</div>
+<div id="pieces-list"></div>
+
+<div class="section-title">MATIÈRES PREMIÈRES</div>
+<div id="matieres-list"></div>
+
+<div class="recap">
+  <div class="section-title" style="margin-top:0; margin-bottom:10px;">RÉCAPITULATIF DE LA COMMANDE</div>
+  <div id="recap-rows"><div class="empty">Aucun article sélectionné</div></div>
+  <div class="recap-total">
+    <div class="recap-total-label">TOTAL</div>
+    <div class="recap-total-val" id="total-val">0 €</div>
+  </div>
+  <button class="btn-reset" onclick="resetAll()">🗑 Réinitialiser la commande</button>
+</div>
+
+<div class="footer">Simulateur économie armes — FiveM RP</div>
+
+<script>
+const ARMES = [
+  { id:"pistolet", name:"Pistolet WM 29",  prix:3000000, badge:"bg-blue",   label:"Recette réduite" },
+  { id:"compact",  name:"Fusil compact",    prix:4000000, badge:"bg-green",  label:"Entrée de gamme" },
+  { id:"assaut",   name:"Fusil d'assaut",   prix:5500000, badge:"bg-amber",  label:"Milieu de gamme" },
+  { id:"tactique", name:"Fusil tactique",   prix:5500000, badge:"bg-gray",   label:"Haut de gamme"   },
+];
+const PIECES = [
+  { id:"moule",     name:"Moule d'arme",  prix:450000, source:"Fonderie",       badge:"bg-red"    },
+  { id:"canon",     name:"Canon",          prix:200000, source:"Fonderie",       badge:"bg-amber"  },
+  { id:"culasse",   name:"Culasse",        prix:80000,  source:"Cayo Ferraille", badge:"bg-green"  },
+  { id:"percuteur", name:"Percuteur",      prix:80000,  source:"Cayo Ferraille", badge:"bg-green"  },
+  { id:"ressorts",  name:"Ressorts",       prix:80000,  source:"Cayo Ferraille", badge:"bg-green"  },
+  { id:"crosse",    name:"Crosse",         prix:160000, source:"Scierie",        badge:"bg-gray"   },
+  { id:"carcasse",  name:"Carcasse",       prix:150000, source:"Mine de fer",    badge:"bg-blue"   },
+];
+const MATIERES = [
+  { id:"ferraille",  name:"Ferraille",      prix:500,  source:"Cayo Ferraille",      badge:"bg-green"  },
+  { id:"charbon",    name:"Charbon",        prix:500,  source:"Scierie",             badge:"bg-gray"   },
+  { id:"pepite_or",  name:"Pépite d'or",    prix:4000, source:"Mine de fer",         badge:"bg-amber"  },
+  { id:"lingot_fer", name:"Lingot de fer",  prix:6000, source:"Mine de fer",         badge:"bg-blue"   },
+  { id:"cuivre",     name:"Cuivre brut",    prix:1000, source:"Fournisseurs cuivre", badge:"bg-purple" },
+];
+
+const ALL = [
+  ...ARMES.map(a=>({...a,cat:"arme"})),
+  ...PIECES.map(p=>({...p,cat:"piece"})),
+  ...MATIERES.map(m=>({...m,cat:"matiere"}))
+];
+const qtys = {};
+ALL.forEach(i => qtys[i.id] = 0);
+
+function fmt(n) {
+  if (!n) return "0 €";
+  return n.toLocaleString("fr-FR") + " €";
+}
+
+function update() {
+  ALL.forEach(item => {
+    const card = document.getElementById("card-" + item.id);
+    if (card) card.classList.toggle("active", qtys[item.id] > 0);
+    const t = document.getElementById("total-" + item.id);
+    if (t) t.textContent = qtys[item.id] > 0 ? fmt(qtys[item.id] * item.prix) : "";
+  });
+  const rows = ALL.filter(i => qtys[i.id] > 0);
+  const recapEl = document.getElementById("recap-rows");
+  if (!rows.length) {
+    recapEl.innerHTML = '<div class="empty">Aucun article sélectionné</div>';
+    document.getElementById("total-val").textContent = "0 €";
+    return;
+  }
+  let total = 0;
+  recapEl.innerHTML = rows.map(i => {
+    const sub = qtys[i.id] * i.prix;
+    total += sub;
+    return `<div class="recap-row"><span class="recap-label">${i.name} × ${qtys[i.id]}</span><span class="recap-val">${fmt(sub)}</span></div>`;
+  }).join("");
+  document.getElementById("total-val").textContent = fmt(total);
+}
+
+function setQty(id, val) {
+  qtys[id] = Math.max(0, Math.min(9999, parseInt(val)||0));
+  const inp = document.getElementById("inp-" + id);
+  if (inp) inp.value = qtys[id];
+  update();
+}
+
+function resetAll() {
+  ALL.forEach(i => { qtys[i.id] = 0; });
+  ALL.forEach(i => { const inp = document.getElementById("inp-"+i.id); if(inp) inp.value=0; });
+  update();
+}
+
+function qtyCtrl(id) {
+  return `<div class="qty-ctrl">
+    <div class="qty-btn" onclick="setQty('${id}',qtys['${id}']-1)">−</div>
+    <input class="qty-input" id="inp-${id}" type="number" value="0" min="0"
+      onchange="setQty('${id}',this.value)" oninput="setQty('${id}',this.value)">
+    <div class="qty-btn" onclick="setQty('${id}',qtys['${id}']+1)">+</div>
+  </div>`;
+}
+
+document.getElementById("armes-grid").innerHTML = ARMES.map(a=>`
+  <div class="card" id="card-${a.id}">
+    <div class="card-name">${a.name} <span class="badge ${a.badge}">${a.label}</span></div>
+    <div class="card-prix">Prix : <span>${fmt(a.prix)}</span></div>
+    ${qtyCtrl(a.id)}
+    <div class="card-total" id="total-${a.id}"></div>
+  </div>`).join("");
+
+document.getElementById("pieces-list").innerHTML = PIECES.map(p=>`
+  <div class="row-item" id="card-${p.id}">
+    <div class="row-left">
+      <div class="row-name">${p.name} <span class="badge ${p.badge}">${p.source}</span></div>
+      <div class="row-sub">${fmt(p.prix)} / unité</div>
+    </div>
+    <div class="row-right">
+      ${qtyCtrl(p.id)}
+      <div class="row-prix" id="total-${p.id}"></div>
+    </div>
+  </div>`).join("");
+
+document.getElementById("matieres-list").innerHTML = MATIERES.map(m=>`
+  <div class="row-item" id="card-${m.id}">
+    <div class="row-left">
+      <div class="row-name">${m.name} <span class="badge ${m.badge}">${m.source}</span></div>
+      <div class="row-sub">${fmt(m.prix)} / unité</div>
+    </div>
+    <div class="row-right">
+      ${qtyCtrl(m.id)}
+      <div class="row-prix" id="total-${m.id}"></div>
+    </div>
+  </div>`).join("");
+</script>
+</body>
+</html>
