@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulateur de commande — Skyland RP</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --primary:#ff4500;--primary-dark:#cc3600;--primary-light:#ff6b35;
+  --gold:#d4af37;--gold-dark:#b8941f;--gold-light:#e8c547;
+  --bg:#0a0a0f;--bg2:#12121a;--bg3:#1a1a28;
+  --border:#2a2a3e;--border2:#3a3a4e;
+  --text:#e8e6e1;--muted:#8a8a9e;--accent:#d4af37;
+  --success:#4CAF88;--danger:#ff4444;
+}
+body{
+  background:linear-gradient(135deg,var(--bg) 0%,#0f0f18 50%,var(--bg) 100%);
+  color:var(--text);
+  font-family:'Inter',sans-serif;
+  padding:28px 16px 100px;
+  max-width:900px;
+  margin:0 auto;
+  position:relative;
+  overflow-x:hidden;
+}
+
+/* BACKGROUND GLOW */
+body::before{
+  content:'';
+  position:fixed;
+  top:-50%;
+  right:-20%;
+  width:600px;
+  height:600px;
+  background:radial-gradient(circle,rgba(255,69,0,0.1) 0%,transparent 70%);
+  border-radius:50%;
+  pointer-events:none;
+  z-index:-1;
+}
+
+body.light{
+  --bg:#f5f3f0;--bg2:#fff;--bg3:#f0ebe3;
+  --border:#d4c9bb;--border2:#c4b9aa;
+  --text:#1a1a14;--muted:#7a7870;--accent:#b8941f;
+}
+
+.theme-toggle{
+  position:fixed;top:16px;right:16px;width:44px;height:44px;
+  background:linear-gradient(135deg,var(--primary),var(--gold));
+  border:2px solid var(--gold);border-radius:50%;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:20px;
+  z-index:100;box-shadow:0 0 20px rgba(255,69,0,0.3),0 0 40px rgba(212,175,55,0.2);
+  transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+.theme-toggle:hover{
+  transform:scale(1.1);
+  box-shadow:0 0 30px rgba(255,69,0,0.5),0 0 60px rgba(212,175,55,0.3);
+}
+
+/* STICKY SUMMARY BAR */
+.summary-bar{
+  position:fixed;bottom:0;left:0;right:0;
+  background:linear-gradient(180deg,rgba(18,18,26,0.95) 0%,rgba(10,10,15,0.98) 100%);
+  border-top:2px solid var(--gold);
+  padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;
+  z-index:50;box-shadow:0 -4px 20px rgba(0,0,0,0.6),0 0 40px rgba(212,175,55,0.1);
+  backdrop-filter:blur(10px);
+}
+.summary-info{display:flex;gap:24px;align-items:center;flex:1;overflow-x:auto;}
+.summary-item{display:flex;flex-direction:column;min-width:fit-content;}
+.summary-label{font-size:10px;color:var(--muted);letter-spacing:0.12em;text-transform:uppercase;}
+.summary-value{font-size:16px;font-weight:700;color:var(--gold);font-family:'JetBrains Mono',monospace;text-shadow:0 0 10px rgba(212,175,55,0.4);}
+.summary-actions{display:flex;gap:8px;}
+.btn-sm{
+  padding:10px 16px;font-size:12px;font-family:'Inter',sans-serif;border-radius:6px;
+  border:1px solid var(--gold);background:transparent;color:var(--gold);
+  cursor:pointer;transition:all 0.25s cubic-bezier(0.34,1.56,0.64,1);
+  font-weight:600;letter-spacing:0.05em;position:relative;overflow:hidden;
+}
+.btn-sm::before{
+  content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(212,175,55,0.2),transparent);
+  transition:left 0.3s;
+}
+.btn-sm:hover{
+  background:rgba(212,175,55,0.1);
+  box-shadow:0 0 15px rgba(212,175,55,0.3),inset 0 0 15px rgba(212,175,55,0.1);
+  transform:translateY(-2px);
+}
+.btn-sm:hover::before{left:100%;}
+
+.header{
+  text-align:center;margin-bottom:40px;padding-bottom:32px;
+  border-bottom:2px solid var(--gold);
+  position:relative;
+}
+.header::after{
+  content:'';position:absolute;bottom:-2px;left:50%;width:200px;height:2px;
+  background:linear-gradient(90deg,transparent,var(--primary),transparent);
+  transform:translateX(-50%);
+}
+.header-eyebrow{
+  font-size:11px;font-weight:700;letter-spacing:0.2em;color:var(--primary);
+  text-transform:uppercase;margin-bottom:10px;text-shadow:0 0 8px rgba(255,69,0,0.3);
+}
+.header h1{
+  font-size:clamp(26px,6vw,36px);font-weight:700;color:var(--text);
+  letter-spacing:-0.02em;margin-bottom:8px;
+  background:linear-gradient(135deg,var(--text),var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.header-sub{font-size:13px;color:var(--muted);letter-spacing:0.05em;}
+.header-logo{
+  width:clamp(70px,14vw,90px);height:clamp(70px,14vw,90px);
+  object-fit:contain;margin-bottom:16px;border-radius:16px;
+  display:block;margin-left:auto;margin-right:auto;
+  filter:drop-shadow(0 0 15px rgba(255,69,0,0.3));
+  transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+.header-logo:hover{
+  filter:drop-shadow(0 0 25px rgba(212,175,55,0.5));
+  transform:scale(1.05);
+}
+
+.section-label{
+  font-size:10px;font-weight:700;letter-spacing:0.16em;
+  color:var(--gold);text-transform:uppercase;
+  margin:36px 0 18px 2px;display:flex;align-items:center;gap:12px;
+  cursor:pointer;user-select:none;transition:all 0.2s;
+  position:relative;
+}
+.section-label:hover{color:var(--primary);text-shadow:0 0 10px rgba(255,69,0,0.4);}
+.section-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--gold),transparent);}
+.section-toggle{font-size:14px;transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);}
+.section-content.collapsed{display:none;}
+
+.row-item{
+  background:linear-gradient(135deg,var(--bg2) 0%,var(--bg3) 100%);
+  border:1px solid var(--border);border-radius:12px;padding:16px;
+  display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;
+  transition:all 0.25s cubic-bezier(0.34,1.56,0.64,1);gap:12px;flex-wrap:wrap;
+  position:relative;overflow:hidden;
+}
+.row-item::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  opacity:0;transition:opacity 0.25s;
+}
+.row-item:hover{
+  border-color:var(--gold);background:linear-gradient(135deg,rgba(212,175,55,0.05) 0%,var(--bg3) 100%);
+  box-shadow:0 0 20px rgba(212,175,55,0.2),inset 0 0 20px rgba(255,69,0,0.05);
+  transform:translateY(-2px);
+}
+.row-item:hover::before{opacity:1;}
+.row-item.active{
+  border-color:var(--primary);
+  box-shadow:0 0 25px rgba(255,69,0,0.3),inset 0 0 20px rgba(255,69,0,0.08);
+}
+.row-item.pulse{animation:pulse-add 0.5s cubic-bezier(0.34,1.56,0.64,1);}
+@keyframes pulse-add{
+  0%{transform:scale(1.05);border-color:var(--primary);box-shadow:0 0 30px rgba(255,69,0,0.5)}
+  100%{transform:scale(1);box-shadow:0 0 20px rgba(212,175,55,0.2)}
+}
+.row-left{flex:1;min-width:250px;}
+.row-name{
+  font-size:15px;font-weight:600;color:var(--text);
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;
+}
+.row-unitprice{
+  font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);
+  letter-spacing:0.05em;
+}
+.row-right{
+  display:flex;align-items:center;gap:12px;flex-shrink:0;flex-wrap:wrap;
+  justify-content:flex-end;min-width:fit-content;
+}
+.row-total{
+  font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;
+  color:var(--gold);min-width:130px;text-align:right;
+  text-shadow:0 0 10px rgba(212,175,55,0.3);
+}
+
+.badge{
+  font-size:9px;font-weight:700;padding:4px 10px;border-radius:6px;
+  letter-spacing:0.06em;white-space:nowrap;
+  border:1px solid;transition:all 0.2s;
+}
+.b-fonderie{border-color:#ff6b35;background:rgba(255,107,53,0.15);color:#ff8855;}
+.b-mine{border-color:#5B9FDD;background:rgba(91,159,221,0.15);color:#7cb3f0;}
+.b-scierie{border-color:#4CAF88;background:rgba(76,175,136,0.15);color:#6ec9a6;}
+.b-cayo{border-color:#4ecece;background:rgba(78,206,206,0.15);color:#6ee6e6;}
+.b-alimentaire{border-color:#a07be0;background:rgba(160,123,224,0.15);color:#c09fff;}
+.b-a-definir{border-color:#8a8a9e;background:rgba(138,138,158,0.15);color:#ababc0;}
+
+.qty-ctrl{display:flex;align-items:center;gap:8px;}
+.qty-btn{
+  width:38px;height:38px;background:linear-gradient(135deg,var(--bg2),var(--bg3));
+  border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:18px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1);user-select:none;flex-shrink:0;
+  font-weight:600;position:relative;overflow:hidden;
+}
+.qty-btn::before{
+  content:'';position:absolute;inset:0;background:radial-gradient(circle,rgba(212,175,55,0.1),transparent);
+  opacity:0;transition:opacity 0.2s;
+}
+.qty-btn:hover{
+  border-color:var(--gold);background:linear-gradient(135deg,rgba(212,175,55,0.1),var(--bg3));
+  box-shadow:0 0 15px rgba(212,175,55,0.2);
+  transform:translateY(-1px);
+}
+.qty-btn:hover::before{opacity:1;}
+.qty-btn:active{transform:scale(0.92);}
+.qty-input{
+  width:60px;text-align:center;background:var(--bg);border:1px solid var(--border2);
+  border-radius:8px;color:var(--text);font-family:'JetBrains Mono',monospace;
+  font-size:14px;font-weight:600;padding:8px;min-width:fit-content;
+  transition:all 0.2s;
+}
+.qty-input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 12px rgba(212,175,55,0.2);}
+
+.kg-select{
+  appearance:none;-webkit-appearance:none;
+  background:var(--bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23d4af37' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 12px center;
+  border:1px solid var(--border2);border-radius:8px;color:var(--text);
+  font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;
+  padding:10px 36px 10px 14px;cursor:pointer;min-width:140px;
+  transition:all 0.2s;
+}
+.kg-select:hover{border-color:var(--gold);box-shadow:0 0 15px rgba(212,175,55,0.1);}
+.kg-select:focus{outline:none;border-color:var(--gold);box-shadow:0 0 15px rgba(212,175,55,0.2);}
+.kg-select option{background:var(--bg2);color:var(--text);}
+
+.recap{
+  background:linear-gradient(135deg,var(--bg2) 0%,var(--bg3) 100%);
+  border:2px solid var(--gold);border-radius:16px;padding:28px;margin-top:40px;
+  box-shadow:0 0 30px rgba(212,175,55,0.15),inset 0 0 30px rgba(212,175,55,0.05);
+  position:relative;overflow:hidden;
+}
+.recap::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+}
+.recap-title{
+  font-size:10px;font-weight:700;letter-spacing:0.16em;color:var(--primary);
+  text-transform:uppercase;margin-bottom:20px;text-shadow:0 0 8px rgba(255,69,0,0.2);
+}
+.recap-row{
+  display:flex;justify-content:space-between;align-items:center;padding:12px 0;
+  border-bottom:1px solid var(--border);font-size:13px;transition:all 0.2s;
+}
+.recap-row:hover{transform:translateX(4px);}
+.recap-row:last-child{border-bottom:none;}
+.recap-label{color:var(--muted);}
+.recap-val{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--text);}
+.recap-divider{height:1px;background:linear-gradient(90deg,var(--gold),transparent);margin:20px 0;}
+.recap-total{
+  display:flex;justify-content:space-between;align-items:center;gap:12px;
+  padding-top:12px;
+}
+.recap-total-label{font-size:15px;font-weight:700;color:var(--text);}
+.recap-total-val{
+  font-family:'JetBrains Mono',monospace;font-size:32px;font-weight:700;
+  color:var(--gold);text-shadow:0 0 15px rgba(212,175,55,0.4);
+}
+.btn-reset{
+  width:100%;margin-top:20px;background:linear-gradient(135deg,transparent,rgba(255,69,0,0.1));
+  border:1px solid var(--border2);border-radius:8px;color:var(--muted);
+  font-size:12px;font-family:'Inter',sans-serif;padding:12px;cursor:pointer;
+  transition:all 0.2s;font-weight:600;letter-spacing:0.05em;
+}
+.btn-reset:hover{
+  background:linear-gradient(135deg,rgba(255,69,0,0.15),rgba(255,69,0,0.05));
+  border-color:var(--primary);color:var(--primary);
+}
+
+.empty{text-align:center;color:var(--muted);font-size:14px;padding:24px;}
+.footer{text-align:center;font-size:11px;color:var(--muted);margin-top:32px;letter-spacing:0.05em;}
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
+
+body.light .badge{background:transparent;border:1px solid;}
+body.light .btn-sm{color:var(--gold-dark);border-color:var(--gold-dark);}
+body.light .btn-sm:hover{background:rgba(184,148,31,0.1);}
+body.light .qty-btn{border-color:var(--muted);}
+body.light .qty-btn:hover{border-color:var(--gold-dark);}
+
+@media(max-width:768px){
+  body{padding:28px 12px 120px;}
+  .header{margin-bottom:28px;padding-bottom:24px;}
+  .header h1{font-size:22px;}
+  .row-item{padding:14px;flex-direction:column;align-items:flex-start;}
+  .row-right{width:100%;justify-content:space-between;}
+  .row-total{min-width:100%;text-align:right;}
+  .summary-bar{flex-direction:column;align-items:stretch;padding:12px 12px;}
+  .summary-info{flex-direction:column;gap:12px;}
+  .summary-actions{width:100%;gap:6px;}
+  .btn-sm{flex:1;padding:12px;font-size:11px;}
+  .qty-ctrl{width:100%;}
+  .qty-btn,.qty-input{flex:1;}
+  .kg-select{width:100%;}
+  .recap{padding:20px;margin-top:30px;}
+  .recap-total-val{font-size:24px;}
+}
+
+.toast{
+  position:fixed;bottom:100px;left:50%;transform:translateX(-50%);
+  background:linear-gradient(135deg,var(--primary),var(--primary-light));
+  color:#fff;padding:12px 18px;border-radius:8px;font-size:12px;font-weight:600;
+  z-index:200;animation:toast-in 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow:0 0 20px rgba(255,69,0,0.4);
+  letter-spacing:0.05em;
+}
+@keyframes toast-in{
+  from{opacity:0;transform:translateX(-50%) translateY(10px)}
+  to{opacity:1;transform:translateX(-50%) translateY(0)}
+}
+</style>
+</head>
+<body>
+
+<button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" title="Changer le thème">🌙</button>
+
+<div class="header">
+  <svg class="header-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="fireGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" style="stop-color:#ff4500;stop-opacity:1" />
+        <stop offset="100%" style="stop-color:#d4af37;stop-opacity:1" />
+      </linearGradient>
+      <filter id="glow">
+        <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+        <feMerge>
+          <feMergeNode in="coloredBlur"/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+      </filter>
+    </defs>
+    <rect width="200" height="200" fill="url(#fireGrad)" rx="20" filter="url(#glow)"/>
+    <text x="100" y="140" font-size="100" font-weight="bold" text-anchor="middle" fill="white" filter="url(#glow)">⚜️</text>
+  </svg>
+  <div class="header-eyebrow">Skyland RP</div>
+  <h1>Simulateur de commande</h1>
+  <div class="header-sub">Pièces finies & matières premières</div>
+</div>
+
+<div id="products-container"></div>
+
+<div class="recap">
+  <div class="recap-title">Récapitulatif de votre commande</div>
+  <div id="recap-content" style="min-height:40px;">
+    <div class="empty">Aucun article pour le moment</div>
+  </div>
+  <button class="btn-reset" onclick="resetCart()">Réinitialiser la commande</button>
+</div>
+
+<div class="footer">
+  Simulateur Skyland RP © 2025 — Pour usage interne
+</div>
+
+<!-- STICKY SUMMARY BAR -->
+<div class="summary-bar">
+  <div class="summary-info">
+    <div class="summary-item">
+      <div class="summary-label">📦 Articles</div>
+      <div class="summary-value" id="item-count">0</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-label">💰 Total</div>
+      <div class="summary-value" id="total-amount">0 €</div>
+    </div>
+  </div>
+  <div class="summary-actions">
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script>
+const PRODUITS = [
+  {id:1,name:"Canon",cat:"pieces",badge:"b-fonderie",unittype:"unité",unitprice:200000},
+  {id:2,name:"Carcasse",cat:"pieces",badge:"b-mine",unittype:"unité",unitprice:150000},
+  {id:3,name:"Crosse",cat:"pieces",badge:"b-scierie",unittype:"unité",unitprice:160000},
+  {id:4,name:"Culasse",cat:"pieces",badge:"b-cayo",unittype:"unité",unitprice:80000},
+  {id:5,name:"Moule d'arme",cat:"pieces",badge:"b-fonderie",unittype:"unité",unitprice:450000},
+  {id:6,name:"Percuteur",cat:"pieces",badge:"b-cayo",unittype:"unité",unitprice:80000},
+  {id:7,name:"Ressorts",cat:"pieces",badge:"b-cayo",unittype:"unité",unitprice:80000},
+  {id:8,name:"Tampon (max 300/j)",cat:"pieces",badge:"b-alimentaire",unittype:"unité",unitprice:3000},
+  {id:9,name:"Cuivre brut",cat:"matieres",badge:"b-mine",unittype:"kg",unitprice:1000},
+  {id:10,name:"Lingot de fer",cat:"matieres",badge:"b-mine",unittype:"kg",unitprice:6000},
+  {id:11,name:"Pépite d'argent",cat:"matieres",badge:"b-mine",unittype:"kg",unitprice:300},
+  {id:12,name:"Pépite d'or",cat:"matieres",badge:"b-mine",unittype:"kg",unitprice:4000},
+  {id:13,name:"Charbon",cat:"matieres",badge:"b-scierie",unittype:"kg",unitprice:500},
+  {id:14,name:"Feuille de papier",cat:"matieres",badge:"b-scierie",unittype:"kg",unitprice:100},
+  {id:15,name:"Ferraille",cat:"matieres",badge:"b-cayo",unittype:"kg",unitprice:500},
+  {id:16,name:"Barre d'argent imparfait",cat:"matieres",badge:"b-fonderie",unittype:"kg",unitprice:2500},
+  {id:17,name:"Lingot d'or imparfait",cat:"matieres",badge:"b-fonderie",unittype:"kg",unitprice:30000},
+  {id:18,name:"Diamant",cat:"matieres",badge:"b-a-definir",unittype:"kg",unitprice:120},
+];
+
+const CATEGORIES = {
+  pieces:{label:"Pièces finies",icon:"🔫"},
+  matieres:{label:"Matières premières",icon:"⛏️"},
+};
+
+let cart = {};
+let expandedSections = {pieces:true, matieres:true};
+
+function toggleTheme(){
+  document.body.classList.toggle("light");
+  const btn = document.getElementById("themeBtn");
+  btn.textContent = document.body.classList.contains("light") ? "☀️" : "🌙";
+}
+
+function toggleSection(cat){
+  expandedSections[cat] = !expandedSections[cat];
+  const content = document.getElementById("content-"+cat);
+  content.classList.toggle("collapsed");
+  const toggle = document.querySelector(`[data-toggle="${cat}"]`);
+  toggle.style.transform = expandedSections[cat] ? "rotate(0deg)" : "rotate(-90deg)";
+}
+
+function showToast(msg){
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(()=>toast.remove(),1500);
+}
+
+function renderProducts(){
+  const container = document.getElementById("products-container");
+  container.innerHTML = "";
+  Object.entries(CATEGORIES).forEach(([key,cat])=>{
+    const items = PRODUITS.filter(p=>p.cat===key);
+    const section = document.createElement("div");
+    
+    const entrepriseNames = {
+      "b-fonderie":"Fonderie","b-mine":"Mine","b-scierie":"Scierie",
+      "b-cayo":"Cayo Ferraille","b-alimentaire":"Alimentation","b-a-definir":"À définir"
+    };
+    
+    section.innerHTML = `
+      <div class="section-label" onclick="toggleSection('${key}')">
+        <span data-toggle="${key}" class="section-toggle" style="transform:rotate(${expandedSections[key]?0:-90}deg)">▶</span>
+        ${cat.icon} ${cat.label}
+      </div>
+      <div id="content-${key}" class="section-content${expandedSections[key]?'':' collapsed'}"></div>
+    `;
+    
+    const content = section.querySelector(`#content-${key}`);
+    items.forEach(p=>{
+      const row = document.createElement("div");
+      row.className = "row-item" + (cart[p.id]?" active":"");
+      row.id = "item-"+p.id;
+      const qty = cart[p.id] || 0;
+      const entrepriseName = entrepriseNames[p.badge] || p.unittype.toUpperCase();
+      
+      let controlsHTML = "";
+      if(p.unittype === "unité"){
+        controlsHTML = `
+          <div class="qty-ctrl">
+            <button class="qty-btn" onclick="updateQty(${p.id},-1)">−</button>
+            <input type="number" class="qty-input" value="${qty}" onchange="setQty(${p.id},this.value)" min="0">
+            <button class="qty-btn" onclick="updateQty(${p.id},1)">+</button>
+          </div>
+        `;
+      } else {
+        controlsHTML = `
+          <select class="kg-select" onchange="setQtyKg(${p.id},this.value)" id="select-${p.id}">
+            <option value="0">− kg</option>
+            <option value="1">1 kg</option>
+            <option value="5">5 kg</option>
+            <option value="10">10 kg</option>
+            <option value="25">25 kg</option>
+            <option value="50">50 kg</option>
+            <option value="100">100 kg</option>
+            <option value="250">250 kg</option>
+            <option value="500">500 kg</option>
+            <option value="1000">1000 kg</option>
+          </select>
+        `;
+      }
+      
+      row.innerHTML = `
+        <div class="row-left">
+          <div class="row-name">
+            ${p.name}
+            <span class="badge ${p.badge}">${entrepriseName}</span>
+          </div>
+          <div class="row-unitprice">${p.unitprice.toLocaleString('fr-FR')} € / unité</div>
+        </div>
+        <div class="row-right">
+          ${controlsHTML}
+          <div class="row-total">${(qty*p.unitprice).toLocaleString('fr-FR')} €</div>
+        </div>
+      `;
+      content.appendChild(row);
+    });
+    container.appendChild(section);
+  });
+  updateRecap();
+}
+
+function updateQty(id,delta){
+  const prod = PRODUITS.find(p=>p.id===id);
+  let qty = (cart[id]||0) + delta;
+  if(qty<0) qty=0;
+  if(qty===0) delete cart[id];
+  else cart[id]=qty;
+  
+  const item = document.getElementById("item-"+id);
+  if(item){
+    item.classList.remove("pulse");
+    setTimeout(()=>item.classList.add("pulse"),10);
+    item.classList.toggle("active",qty>0);
+  }
+  const input = item?.querySelector(".qty-input");
+  if(input) input.value=qty;
+  const total = item?.querySelector(".row-total");
+  if(total) total.textContent=(qty*prod.unitprice).toLocaleString('fr-FR')+" €";
+  updateRecap();
+  if(qty>0) showToast("✓ "+prod.name);
+}
+
+function setQty(id,val){
+  let qty=parseInt(val)||0;
+  if(qty<0) qty=0;
+  if(qty===0) delete cart[id];
+  else cart[id]=qty;
+  const item = document.getElementById("item-"+id);
+  if(item) item.classList.toggle("active",qty>0);
+  const prod = PRODUITS.find(p=>p.id===id);
+  const total = item?.querySelector(".row-total");
+  if(total) total.textContent=(qty*prod.unitprice).toLocaleString('fr-FR')+" €";
+  updateRecap();
+}
+
+function setQtyKg(id,val){
+  let qty=parseInt(val)||0;
+  if(qty<0) qty=0;
+  if(qty===0) delete cart[id];
+  else cart[id]=qty*1000;
+  const item = document.getElementById("item-"+id);
+  if(item){
+    item.classList.remove("pulse");
+    setTimeout(()=>item.classList.add("pulse"),10);
+    item.classList.toggle("active",qty>0);
+  }
+  const prod = PRODUITS.find(p=>p.id===id);
+  const total = item?.querySelector(".row-total");
+  if(total) total.textContent=((qty*1000)*prod.unitprice).toLocaleString('fr-FR')+" €";
+  updateRecap();
+  if(qty>0) showToast("✓ "+prod.name+" ("+qty+"kg)");
+}
+
+function updateRecap(){
+  const recap = document.getElementById("recap-content");
+  const items = Object.entries(cart);
+  
+  document.getElementById("item-count").textContent = items.length;
+  let total = 0;
+  items.forEach(([id,qty])=>{
+    const prod = PRODUITS.find(p=>p.id==id);
+    total+=qty*prod.unitprice;
+  });
+  document.getElementById("total-amount").textContent = total.toLocaleString('fr-FR')+" €";
+  
+  if(!items.length){
+    recap.innerHTML = '<div class="empty">Aucun article pour le moment</div>';
+    return;
+  }
+  let html = "";
+  items.forEach(([id,qty])=>{
+    const prod = PRODUITS.find(p=>p.id==id);
+    const price = qty*prod.unitprice;
+    const unitLabel = prod.unittype === "unité" ? (qty > 1 ? "unités" : "unité") : "kg";
+    html+=`<div class="recap-row"><div class="recap-label">${qty}${unitLabel} × ${prod.name}</div><div class="recap-val">${price.toLocaleString('fr-FR')} €</div></div>`;
+  });
+  html += '<div class="recap-divider"></div>';
+  html += `<div class="recap-total"><div class="recap-total-label">Total estimé</div><div class="recap-total-val">${total.toLocaleString('fr-FR')} €</div></div>`;
+  recap.innerHTML = html;
+}
+
+function resetCart(){
+  if(confirm("Êtes-vous sûr de vouloir réinitialiser la commande ?")){
+    cart={};
+    renderProducts();
+    showToast("✓ Commande réinitialisée");
+  }
+}
+
+function downloadPDF(){
+  const element = document.querySelector(".recap");
+  const opt = {margin:10,filename:'commande-skyland.pdf',image:{type:'jpeg',quality:0.98},html2canvas:{scale:2},jsPDF:{orientation:'portrait',unit:'mm',format:'a4'}};
+  html2pdf().set(opt).from(element).save();
+  showToast("✓ PDF téléchargé");
+}
+
+function printPage(){
+  window.print();
+}
+
+renderProducts();
+</script>
+</body>
+</html>
