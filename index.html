@@ -184,8 +184,8 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .infos summary i{width:6px;height:6px;border-radius:50%;background:var(--jaune);flex:0 0 auto}
 .memo{padding:2px 14px 14px;font-size:11.3px;line-height:1.55;color:var(--muted)}
 .memo h4{font-size:9.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--jaune);
-  margin:13px 0 4px;font-weight:800}
-.memo h4:first-child{margin-top:4px}
+  margin:16px 0 5px;font-weight:800;padding-top:13px;border-top:1px solid var(--line)}
+.memo h4:first-child{margin-top:4px;padding-top:0;border-top:0}
 .memo b{color:var(--txt);font-weight:800}
 .memo a{color:var(--jaune);text-decoration:none;word-break:break-word}
 .memo ul{margin:0;padding-left:14px}
@@ -241,9 +241,10 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 }
 .prime small{font-size:9px;font-weight:700;color:var(--muted);display:block;margin-top:1px}
 
-.grand{display:flex;align-items:baseline;gap:7px;font-variant-numeric:tabular-nums}
-.grand b{font-size:30px;font-weight:900;letter-spacing:-1.2px;line-height:1}
-.grand span{font-size:16px;font-weight:800;color:var(--muted)}
+.grand{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;
+  font-variant-numeric:tabular-nums;line-height:1.15}
+.grand b{font-size:25px;font-weight:900;letter-spacing:-.8px}
+.grand span{font-size:13px;font-weight:700;color:var(--muted)}
 .puis{font-size:12.5px;color:var(--muted);margin-top:4px;font-variant-numeric:tabular-nums}
 .puis b{color:var(--txt)}
 /* Une fois le credit solde, la garantie continue jusqu'a un an d'adhesion. */
@@ -255,12 +256,27 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .piste i{display:block;height:100%;border-radius:999px;background:var(--opt)}
 .jauge em{font-style:normal;font-size:11px;font-weight:800;color:var(--muted);white-space:nowrap}
 
-.kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
-  border-top:1px solid var(--line);padding-top:10px}
-.kpi span{display:block;font-size:9px;font-weight:800;text-transform:uppercase;
-  letter-spacing:.4px;color:var(--muted);white-space:nowrap}
-.kpi b{display:block;font-size:14.5px;font-weight:900;margin-top:3px;
+/* Un indicateur par ligne, libelle a gauche et montant a droite : sur un
+   ecran etroit, trois colonnes forcaient a abreger les libelles. */
+.kpi{display:grid;gap:7px;border-top:1px solid var(--line);padding-top:11px}
+.kpi div{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.kpi span{font-size:10px;font-weight:800;text-transform:uppercase;
+  letter-spacing:.4px;color:var(--muted);line-height:1.3}
+.kpi b{font-size:15px;font-weight:900;white-space:nowrap;
   font-variant-numeric:tabular-nums;letter-spacing:-.3px}
+.kpi .fort{margin-top:2px;padding-top:8px;border-top:1px solid var(--line)}
+.kpi .fort b{font-size:17.5px}
+/* L'argument commercial : ce que la formule change par rapport a l'absence
+   d'option. Teinte de la couleur de la formule, sans nouvelle couleur. */
+.compare{
+  margin-top:11px;padding:9px 12px;border-radius:12px;
+  background:color-mix(in srgb,var(--opt) 11%,transparent);
+  border:1px solid color-mix(in srgb,var(--opt) 28%,transparent);
+  font-size:12px;color:var(--muted);line-height:1.5;
+}
+.compare span{display:block;font-size:9.5px;font-weight:800;text-transform:uppercase;
+  letter-spacing:.5px;margin-bottom:3px;opacity:.85}
+.compare b{color:var(--txt);font-size:13px}
 .bas{margin-top:9px;font-size:11px;color:var(--muted);display:flex;flex-wrap:wrap;gap:5px}
 .bas em{font-style:normal;background:var(--surf2);border:1px solid var(--line);
   border-radius:8px;padding:3px 7px}
@@ -292,7 +308,8 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .dock .valider{display:none;font-size:15px}
 .dock.saisie .valider{display:block}
 .dock.saisie #btnCopie,.dock.saisie #btnReset{display:none}
-footer{padding:16px 18px 4px;font-size:10.5px;color:var(--faint);line-height:1.55;text-align:center}
+footer{padding:18px 18px 4px;font-size:9.5px;color:var(--faint);line-height:1.6;
+  text-align:center;opacity:.75}
 
 /* ===================== TABLETTE ===================== */
 @media (min-width:640px){
@@ -348,12 +365,11 @@ footer{padding:16px 18px 4px;font-size:10.5px;color:var(--faint);line-height:1.5
   #resultats.n2{grid-template-columns:repeat(2,1fr)}
   #resultats.n4{grid-template-columns:repeat(4,1fr)}
 
-  /* colonnes etroites : les indicateurs passent en liste */
-  .kpi{grid-template-columns:1fr;gap:5px}
-  .kpi div{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
-  .kpi span{white-space:normal}
-  .kpi b{margin-top:0}
-  .grand b{font-size:27px}
+  /* colonnes etroites : on resserre un peu les indicateurs */
+  .kpi span{font-size:9.5px}
+  .kpi b{font-size:14px}
+  .kpi .fort b{font-size:16px}
+  .grand b{font-size:22px}
   .bas{flex-direction:column;align-items:flex-start}
 
   /* en-tete de carte a hauteur fixe, sinon un sous-titre sur deux lignes
@@ -829,21 +845,32 @@ function carte(g, r, valeur, ec, maxJauge, base, conseille){
       '</b> de garantie seule, soit <b>' + eur0((g.prime + ec) * r.moisApres) + '</b></div>'
     : '';
 
+  // Ce que le client paie chaque mois, et de quoi c'est fait.
+  const motGar = g.type === 'EC' ? 'assurance' : 'garantie';
+  // ce que recouvre la ligne d'options : garantie, assurance mobile, ou les deux
+  const motOptions = (g.prime && ec) ? motGar + ' + assurance mobile'
+                   : g.prime ? motGar : 'assurance mobile';
+  const parts = [];
+  if (g.prime) parts.push(motGar + ' <b>' + eur0(g.prime) + '</b>');
+  if (ec)      parts.push('assurance mobile <b>' + eur0(ec) + '</b>');
+  const dont = parts.length
+    ? '<div class="puis">dont financement <b>' + eur0(r.mensCredit) + '</b> + ' + parts.join(' + ') + '</div>'
+    : '';
+
+  const ligne = (n, montant) =>
+    '<div class="grand"><b>' + n + '</b><span>' + (n > 1 ? 'mensualités de' : 'mensualité de') +
+    '</span><b>' + eur0(montant) + '</b></div>';
+
   let grand;
   if (r.sens === 'duree'){
-    const detail = [];
-    if (g.prime) detail.push(g.type + ' ' + eur0(g.prime));
-    if (ec)      detail.push('EC ' + eur0(ec));
-    grand = '<div class="grand"><b>' + r.echeances + '</b><span>× ' + eur(r.mensualite) + '</span></div>' +
-      (detail.length
-        ? '<div class="puis">dont crédit <b>' + eur(r.mensCredit) + '</b> + ' + detail.join(' + ') + '</div>'
-        : '') + suite;
+    grand = ligne(r.echeances, r.mensualite) + dont + suite;
   } else if (r.mois > 0){
-    grand = '<div class="grand"><b>' + r.mois + '</b><span>× ' + eur0(valeur) + '</span></div>' +
-      (r.derniere >= 0.01 ? '<div class="puis">puis 1 mois à <b>' + eur(r.derniere) + '</b></div>' : '') +
-      suite;
+    grand = ligne(r.mois, valeur) + dont +
+      (r.derniere >= 0.01
+        ? '<div class="puis">puis une dernière mensualité de <b>' + eur(r.derniere) + '</b></div>'
+        : '') + suite;
   } else {
-    grand = '<div class="grand"><b>1</b><span>× ' + eur(r.derniere) + '</span></div>' + suite;
+    grand = ligne(1, r.derniere) + suite;
   }
 
   const valJauge = r.sens === 'duree' ? r.mensualite : r.echeances;
@@ -852,33 +879,40 @@ function carte(g, r, valeur, ec, maxJauge, base, conseille){
       Math.max(6, Math.round(valJauge / maxJauge * 100)) + '%"></i></span>' +
       '<em>' + (r.sens === 'duree' ? eur(r.mensualite) + '/mois' : r.echeances + ' mois') + '</em></div>';
 
-  const puces = [];
-  if (g.prime) puces.push('<em>' + g.type + ' ' + eur0(g.prime) + ' × ' + r.moisPrime +
-    ' = <b>' + eur0(g.prime * r.moisPrime) + '</b></em>');
-  if (ec) puces.push('<em>EC ' + eur0(ec) + ' × ' + r.moisPrime +
-    ' = <b>' + eur0(ec * r.moisPrime) + '</b></em>');
-  // Comparaison avec la formule sans option. Le montant est toujours precise :
-  // ce sont des interets en plus, pas le prix de la garantie.
+  // Comparaison avec la formule sans option : l'argument commercial.
+  // Le montant est toujours qualifie, pour ne pas le confondre avec le prix
+  // de la garantie, qui figure dans les indicateurs juste au-dessus.
+  let compare = '';
   if (base.ok && g.prime){
     const sans = g.type === 'EC' ? 'sans assurance' : 'sans garantie';
-    if (r.sens === 'duree'){
-      puces.push('<em>vs ' + sans + ' : <b>+' + eur(r.mensualite - base.mensualite) +
-        '/mois</b>, soit <b>+' + eur(r.total - base.total) + '</b> au total</em>');
-    } else {
-      const dm = r.echeances - base.echeances;
-      puces.push('<em>vs ' + sans + ' : <b>+' + eur(r.interets - base.interets) +
-        ' d\'intérêts</b>, ' + (dm === 0 ? 'durée inchangée' : '<b>+' + dm + ' mois</b>') + '</em>');
-    }
+    const lignes = r.sens === 'duree'
+      ? ['<b>+' + eur(r.mensualite - base.mensualite) + ' par mois</b>',
+         '<b>+' + eur(r.total - base.total) + '</b> sur la durée']
+      : ['<b>+' + eur(r.interets - base.interets) + '</b> d\'intérêts',
+         (r.echeances - base.echeances) === 0
+           ? 'durée inchangée'
+           : '<b>+' + (r.echeances - base.echeances) + ' mois</b> de crédit'];
+    compare = '<div class="compare"><span>vs ' + sans + '</span>' +
+      lignes.map(l => '<div>' + l + '</div>').join('') + '</div>';
   }
+
+  const puces = [];
   if (r.echeances > 48) puces.push('<em style="color:#ff9ea1">⚠ au-delà du barème habituel</em>');
 
   return '<article class="opt' + (conseille ? ' top' : '') + '" style="--opt:' + g.col + '">' +
     tete + grand + jauge +
     '<div class="kpi">' +
       '<div><span>Coût du crédit</span><b>' + eur(r.interets) + '</b></div>' +
-      '<div><span>Soit par mois</span><b>' + eur(r.coutMois) + '</b></div>' +
-      '<div><span>Total payé</span><b>' + eur(r.total) + '</b></div>' +
+      '<div><span>Coût du crédit / mois</span><b>' + eur(r.coutMois) + '</b></div>' +
+      ((g.prime || ec)
+        // le detail reste insecable : en colonne etroite il passe a la ligne d'un bloc
+        ? '<div><span>' + motOptions + ' — ' +
+          (eur0(g.prime + ec) + '/mois × ' + r.moisPrime).replace(/ /g, '\u00a0') +
+          '</span><b>' + eur((g.prime + ec) * r.moisPrime) + '</b></div>'
+        : '') +
+      '<div class="fort"><span>Total payé</span><b>' + eur(r.total) + '</b></div>' +
     '</div>' +
+    compare +
     (puces.length ? '<div class="bas">' + puces.join('') + '</div>' : '') +
   '</article>';
 }
@@ -898,15 +932,27 @@ function texteSimu(){
     const r = resultat(capital, valeur, g.prime, ec, calcul);
     t += (g.prime ? g.nom + ' (+' + eur0(g.prime) + '/mois)' : g.nom) + '\n';
     if (!r.ok){ t += '  Budget insuffisant\n\n'; return; }
+    // meme vocabulaire que les cartes
     t += r.sens === 'duree'
-      ? '  ' + r.echeances + ' mois à ' + eur(r.mensualite) +
-        ' (dont crédit ' + eur(r.mensCredit) + ')\n  Coût du crédit : ' + eur(r.interets) + '\n'
-      : '  ' + (r.mois ? r.mois + ' mois à ' + eur0(valeur) + ' + ' : '') +
-        '1 mois à ' + eur(r.derniere) + '\n  Coût du crédit : ' + eur(r.interets) + '\n';
-    if (r.moisApres && g.prime)
-      t += '  Engagement 1 an : ' + r.moisApres + ' mois à ' + eur0(g.prime + ec) +
-           ' après la fin du crédit\n';
-    t += '\n';
+      ? '  ' + r.echeances + ' mensualités de ' + eur(r.mensualite) +
+        ' (dont financement ' + eur0(r.mensCredit) +
+        (g.prime ? ' + garantie ' + eur0(g.prime) : '') +
+        (ec ? ' + assurance mobile ' + eur0(ec) : '') + ')\n'
+      : '  ' + (r.mois ? r.mois + ' mensualités de ' + eur0(valeur) +
+                (g.prime || ec ? ' (dont financement ' + eur0(r.mensCredit) +
+                  (g.prime ? ' + garantie ' + eur0(g.prime) : '') +
+                  (ec ? ' + assurance mobile ' + eur0(ec) : '') + ')' : '') +
+                '\n  puis une dernière mensualité de ' : '  1 mensualité de ') +
+        eur(r.derniere) + '\n';
+    t += '  Coût du crédit : ' + eur(r.interets) + '\n';
+    if (g.prime || ec)
+      t += '  ' + ((g.prime && ec) ? 'Garantie + assurance mobile'
+                 : g.prime ? 'Garantie' : 'Assurance mobile') +
+           ' : ' + eur0(g.prime + ec) + '/mois × ' + r.moisPrime +
+           ' = ' + eur((g.prime + ec) * r.moisPrime) + '\n';
+    if (r.moisApres && (g.prime || ec))
+      t += '  dont ' + r.moisApres + ' mois après la fin du crédit\n';
+    t += '  Total payé : ' + eur(r.total) + '\n\n';
   });
   return t;
 }
@@ -1007,8 +1053,8 @@ $('#btnCopie').addEventListener('click', async e => {
     ta.value = txt; document.body.appendChild(ta); ta.select();
     document.execCommand('copy'); ta.remove();
   }
-  const old = btn.textContent; btn.textContent = 'Copié ✓';
-  setTimeout(() => btn.textContent = old, 1400);
+  const old = btn.textContent; btn.textContent = '✓ Simulation copiée';
+  setTimeout(() => btn.textContent = old, 1600);
 });
 
 /* ===================== MAIL DE RÉSILIATION ===================== */
